@@ -1,0 +1,320 @@
+-- BHop Accelerator + Knife Changer + Force First Person
+local player = game.Players.LocalPlayer
+local uis = game:GetService("UserInputService")
+local runService = game:GetService("RunService")
+local camera = workspace.CurrentCamera
+
+-- ============================================
+-- GUI СОЗДАНИЕ
+-- ============================================
+local screenGui = Instance.new("ScreenGui")
+screenGui.Parent = game.CoreGui
+
+-- Главный фрейм
+local mainFrame = Instance.new("Frame")
+mainFrame.Size = UDim2.new(0, 250, 0, 350)
+mainFrame.Position = UDim2.new(0.5, -125, 0.3, 0)
+mainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+mainFrame.BorderSizePixel = 0
+mainFrame.Active = true
+mainFrame.Draggable = true
+mainFrame.Parent = screenGui
+
+local corner = Instance.new("UICorner", mainFrame)
+corner.CornerRadius = UDim.new(0, 6)
+
+-- Заголовок
+local title = Instance.new("TextLabel")
+title.Size = UDim2.new(1, 0, 0, 30)
+title.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+title.Text = "🔥 BHOP + KNIFE GUI"
+title.TextColor3 = Color3.new(1, 1, 1)
+title.Font = Enum.Font.GothamBold
+title.TextSize = 14
+title.Parent = mainFrame
+
+-- ============================================
+-- СЕКЦИЯ BHOP
+-- ============================================
+local bhopLabel = Instance.new("TextLabel")
+bhopLabel.Size = UDim2.new(0.9, 0, 0, 20)
+bhopLabel.Position = UDim2.new(0.05, 0, 0.12, 0)
+bhopLabel.BackgroundTransparency = 1
+bhopLabel.Text = "🏃 BUNNYHOP"
+bhopLabel.TextColor3 = Color3.fromRGB(255, 255, 100)
+bhopLabel.Font = Enum.Font.GothamBold
+bhopLabel.TextSize = 13
+bhopLabel.TextXAlignment = Enum.TextXAlignment.Left
+bhopLabel.Parent = mainFrame
+
+-- Кнопка BHop
+local bhopButton = Instance.new("TextButton")
+bhopButton.Size = UDim2.new(0.8, 0, 0, 30)
+bhopButton.Position = UDim2.new(0.1, 0, 0.2, 0)
+bhopButton.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+bhopButton.Text = "BHop: OFF"
+bhopButton.TextColor3 = Color3.new(1, 1, 1)
+bhopButton.Font = Enum.Font.Gotham
+bhopButton.TextSize = 13
+bhopButton.Parent = mainFrame
+
+local buttonCorner1 = Instance.new("UICorner", bhopButton)
+buttonCorner1.CornerRadius = UDim.new(0, 4)
+
+-- Слайдер скорости
+local speedLabel = Instance.new("TextLabel")
+speedLabel.Size = UDim2.new(0.8, 0, 0, 18)
+speedLabel.Position = UDim2.new(0.1, 0, 0.3, 0)
+speedLabel.BackgroundTransparency = 1
+speedLabel.Text = "Speed Multiplier: 1.5x"
+speedLabel.TextColor3 = Color3.new(0.9, 0.9, 0.9)
+speedLabel.Font = Enum.Font.Gotham
+speedLabel.TextSize = 12
+speedLabel.TextXAlignment = Enum.TextXAlignment.Left
+speedLabel.Parent = mainFrame
+
+local speedSlider = Instance.new("TextBox")
+speedSlider.Size = UDim2.new(0.5, 0, 0, 20)
+speedSlider.Position = UDim2.new(0.4, 0, 0.34, 0)
+speedSlider.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+speedSlider.Text = "1.5"
+speedSlider.TextColor3 = Color3.new(1, 1, 1)
+speedSlider.Font = Enum.Font.Gotham
+speedSlider.TextSize = 12
+speedSlider.Parent = mainFrame
+
+-- ============================================
+-- СЕКЦИЯ НОЖЕЙ
+-- ============================================
+local knifeLabel = Instance.new("TextLabel")
+knifeLabel.Size = UDim2.new(0.9, 0, 0, 20)
+knifeLabel.Position = UDim2.new(0.05, 0, 0.45, 0)
+knifeLabel.BackgroundTransparency = 1
+knifeLabel.Text = "🔪 KNIFE CHANGER"
+knifeLabel.TextColor3 = Color3.fromRGB(255, 150, 50)
+knifeLabel.Font = Enum.Font.GothamBold
+knifeLabel.TextSize = 13
+knifeLabel.TextXAlignment = Enum.TextXAlignment.Left
+knifeLabel.Parent = mainFrame
+
+-- Кнопки выбора ножей
+local knives = {
+    {name = "🦋 Butterfly", assetId = "rbxassetid://7546640012"},
+    {name = "🔪 Karambit", assetId = "rbxassetid://7546653235"},
+    {name = "🗡️ Bayonet", assetId = "rbxassetid://7546638152"},
+    {name = "⚔️ M9 Bayonet", assetId = "rbxassetid://7546645349"},
+    {name = "❌ None", assetId = nil}
+}
+
+local knifeButtons = {}
+local selectedKnife = nil
+local knifeImage = nil
+
+-- Создаём ImageLabel для отображения ножа на экране
+local knifeDisplay = Instance.new("ImageLabel")
+knifeDisplay.Size = UDim2.new(0, 200, 0, 200)
+knifeDisplay.Position = UDim2.new(0.7, 0, 0.6, 0)
+knifeDisplay.BackgroundTransparency = 1
+knifeDisplay.Visible = false
+knifeDisplay.Parent = screenGui
+
+for i, knife in ipairs(knives) do
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(0.8, 0, 0, 25)
+    btn.Position = UDim2.new(0.1, 0, 0.5 + (i * 0.065), 0)
+    btn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+    btn.Text = knife.name
+    btn.TextColor3 = Color3.new(1, 1, 1)
+    btn.Font = Enum.Font.Gotham
+    btn.TextSize = 12
+    btn.Parent = mainFrame
+    
+    local btnCorner = Instance.new("UICorner", btn)
+    btnCorner.CornerRadius = UDim.new(0, 3)
+    
+    btn.MouseButton1Click:Connect(function()
+        selectedKnife = knife.assetId
+        if knifeDisplay then
+            if knife.assetId then
+                knifeDisplay.Image = knife.assetId
+                knifeDisplay.Visible = true
+                -- Подсвечиваем выбранный нож
+                for _, b in ipairs(knifeButtons) do
+                    b.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+                end
+                btn.BackgroundColor3 = Color3.fromRGB(255, 150, 50)
+            else
+                knifeDisplay.Visible = false
+                for _, b in ipairs(knifeButtons) do
+                    b.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+                end
+            end
+        end
+    end)
+    
+    table.insert(knifeButtons, btn)
+end
+
+-- ============================================
+-- ПРИНУДИТЕЛЬНОЕ ПЕРВОЕ ЛИЦО
+-- ============================================
+local fppLabel = Instance.new("TextLabel")
+fppLabel.Size = UDim2.new(0.9, 0, 0, 20)
+fppLabel.Position = UDim2.new(0.05, 0, 0.85, 0)
+fppLabel.BackgroundTransparency = 1
+fppLabel.Text = "👁️ FORCE FIRST PERSON"
+fppLabel.TextColor3 = Color3.fromRGB(100, 200, 255)
+fppLabel.Font = Enum.Font.GothamBold
+fppLabel.TextSize = 12
+fppLabel.TextXAlignment = Enum.TextXAlignment.Left
+fppLabel.Parent = mainFrame
+
+local fppButton = Instance.new("TextButton")
+fppButton.Size = UDim2.new(0.8, 0, 0, 25)
+fppButton.Position = UDim2.new(0.1, 0, 0.9, 0)
+fppButton.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+fppButton.Text = "First Person Lock: OFF"
+fppButton.TextColor3 = Color3.new(1, 1, 1)
+fppButton.Font = Enum.Font.Gotham
+fppButton.TextSize = 12
+fppButton.Parent = mainFrame
+
+local buttonCorner2 = Instance.new("UICorner", fppButton)
+buttonCorner2.CornerRadius = UDim.new(0, 4)
+
+-- ============================================
+-- ЛОГИКА BHOP С УСКОРЕНИЕМ
+-- ============================================
+local bhopEnabled = false
+local fppEnabled = false
+local speedMultiplier = 1.5
+local lastJumpTime = 0
+local jumpCooldown = 0.05
+
+-- Проверка земли
+local function checkGround()
+    local char = player.Character
+    if not char then return false end
+    local root = char:FindFirstChild("HumanoidRootPart")
+    if not root then return false end
+    
+    local ray = Ray.new(root.Position, Vector3.new(0, -3.5, 0))
+    local hit = workspace:FindPartOnRay(ray, char)
+    return hit ~= nil
+end
+
+-- Получение направления движения
+local function getMoveDirection()
+    local char = player.Character
+    if not char or not char:FindFirstChild("Humanoid") then return Vector3.new(0,0,0) end
+    
+    local humanoid = char.Humanoid
+    return humanoid.MoveDirection
+end
+
+-- Основной цикл BHop с ускорением
+runService.RenderStepped:Connect(function(dt)
+    -- Принудительное первое лицо
+    if fppEnabled and player.Character then
+        local humanoid = player.Character:FindFirstChild("Humanoid")
+        if humanoid then
+            humanoid.CameraOffset = Vector3.new(0, 0, 0)
+            camera.FieldOfView = 70
+            -- Блокируем смену камеры
+            player.CameraMode = Enum.CameraMode.LockFirstPerson
+            player.CameraMinZoomDistance = 0
+            player.CameraMaxZoomDistance = 0
+        end
+    end
+    
+    if not bhopEnabled then return end
+    
+    if uis:IsKeyDown(Enum.KeyCode.Space) then
+        local char = player.Character
+        if not char then return end
+        
+        local humanoid = char:FindFirstChild("Humanoid")
+        local root = char:FindFirstChild("HumanoidRootPart")
+        
+        if humanoid and root and checkGround() then
+            local currentTime = tick()
+            if currentTime - lastJumpTime > jumpCooldown then
+                humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+                lastJumpTime = currentTime
+                
+                -- Применяем ускорение к скорости движения
+                local moveDir = getMoveDirection()
+                if moveDir.Magnitude > 0 then
+                    local velocity = root.Velocity
+                    local forwardSpeed = velocity:Dot(moveDir.Unit)
+                    
+                    -- Увеличиваем горизонтальную скорость
+                    if forwardSpeed < 50 * speedMultiplier then
+                        local boost = moveDir.Unit * (speedMultiplier * 10)
+                        root.Velocity = Vector3.new(
+                            velocity.X + boost.X,
+                            velocity.Y,
+                            velocity.Z + boost.Z
+                        )
+                    end
+                end
+            end
+        end
+    end
+end)
+
+-- Установка скорости ходьбы
+runService.Heartbeat:Connect(function()
+    if bhopEnabled and player.Character then
+        local humanoid = player.Character:FindFirstChild("Humanoid")
+        if humanoid then
+            humanoid.WalkSpeed = 16 * speedMultiplier
+        end
+    end
+end)
+
+-- ============================================
+-- ОБРАБОТЧИКИ КНОПОК
+-- ============================================
+bhopButton.MouseButton1Click:Connect(function()
+    bhopEnabled = not bhopEnabled
+    if bhopEnabled then
+        bhopButton.Text = "BHop: ON"
+        bhopButton.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
+    else
+        bhopButton.Text = "BHop: OFF"
+        bhopButton.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+        -- Сбрасываем скорость
+        if player.Character then
+            local humanoid = player.Character:FindFirstChild("Humanoid")
+            if humanoid then
+                humanoid.WalkSpeed = 16
+            end
+        end
+    end
+end)
+
+fppButton.MouseButton1Click:Connect(function()
+    fppEnabled = not fppEnabled
+    if fppEnabled then
+        fppButton.Text = "First Person Lock: ON"
+        fppButton.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
+        player.CameraMode = Enum.CameraMode.LockFirstPerson
+    else
+        fppButton.Text = "First Person Lock: OFF"
+        fppButton.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+        player.CameraMode = Enum.CameraMode.Classic
+    end
+end)
+
+speedSlider.FocusLost:Connect(function()
+    local num = tonumber(speedSlider.Text)
+    if num and num >= 1 and num <= 5 then
+        speedMultiplier = num
+        speedLabel.Text = "Speed Multiplier: " .. num .. "x"
+    else
+        speedSlider.Text = tostring(speedMultiplier)
+    end
+end)
+
+print("BHop Accelerator + Knife GUI loaded!")
